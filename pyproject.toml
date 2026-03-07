@@ -1,0 +1,35 @@
+[build-system]
+requires = ["setuptools>=68.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "goldlapel-sqlalchemy"
+version = "0.1.0"
+description = "Gold Lapel plugin for SQLAlchemy — automatic Postgres query optimization"
+readme = "README.md"
+license = {text = "Proprietary"}
+requires-python = ">=3.9"
+authors = [{name = "Stephen Gibson"}]
+keywords = ["sqlalchemy", "postgres", "proxy", "optimization", "goldlapel", "database", "fastapi"]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Developers",
+    "Topic :: Database",
+    "Programming Language :: Python :: 3",
+    "Operating System :: POSIX :: Linux",
+    "Operating System :: MacOS",
+]
+dependencies = [
+    "goldlapel",
+    "SQLAlchemy>=1.4",
+]
+
+[project.urls]
+Homepage = "https://goldlapel.com"
+Repository = "https://github.com/goldlapel/goldlapel-sqlalchemy"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
