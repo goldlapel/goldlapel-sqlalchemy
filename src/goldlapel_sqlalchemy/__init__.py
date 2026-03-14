@@ -22,9 +22,10 @@ def _restore_dialect(proxy_url, dialect):
 
 def _start_proxy(url, kwargs):
     port = kwargs.pop("goldlapel_port", None)
+    config = kwargs.pop("goldlapel_config", None)
     extra_args = kwargs.pop("goldlapel_extra_args", None)
     clean_url, dialect = _strip_dialect(str(url))
-    proxy = goldlapel.start(clean_url, port=port, extra_args=extra_args)
+    proxy = goldlapel.start(clean_url, config=config, port=port, extra_args=extra_args)
     return _restore_dialect(proxy, dialect)
 
 
@@ -39,12 +40,12 @@ def create_async_engine(url, **kwargs):
     return _sa_create_async_engine(proxy, **kwargs)
 
 
-def init(url=None, *, port=None, extra_args=None):
+def init(url=None, *, config=None, port=None, extra_args=None):
     url = url or os.environ.get("DATABASE_URL")
     if not url:
         raise ValueError("Gold Lapel: DATABASE_URL not set. Pass a URL or set DATABASE_URL.")
     clean_url, dialect = _strip_dialect(str(url))
-    proxy = goldlapel.start(clean_url, port=port, extra_args=extra_args)
+    proxy = goldlapel.start(clean_url, config=config, port=port, extra_args=extra_args)
     proxy = _restore_dialect(proxy, dialect)
     os.environ["DATABASE_URL"] = proxy
     return proxy

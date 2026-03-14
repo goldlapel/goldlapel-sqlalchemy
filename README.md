@@ -64,6 +64,7 @@ Pass Gold Lapel options as keyword arguments:
 ```python
 engine = create_engine(
     "postgresql://user:pass@host:5432/mydb",
+    goldlapel_config={"mode": "butler", "pool_size": 30},
     goldlapel_port=9000,
     goldlapel_extra_args=["--threshold-duration-ms", "200"],
 )
@@ -72,8 +73,14 @@ engine = create_engine(
 Or with `init()`:
 
 ```python
-goldlapel_sqlalchemy.init(port=9000, extra_args=["--threshold-duration-ms", "200"])
+goldlapel_sqlalchemy.init(
+    config={"mode": "butler", "pool_size": 30},
+    port=9000,
+    extra_args=["--threshold-duration-ms", "200"],
+)
 ```
+
+The `goldlapel_config` dict (or `config` in `init()`) accepts any Gold Lapel configuration keys as snake_case Python dict keys. These are passed directly to the Gold Lapel proxy at startup.
 
 ## Dialect Suffixes
 

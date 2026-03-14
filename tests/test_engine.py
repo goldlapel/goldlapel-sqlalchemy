@@ -58,7 +58,7 @@ class TestCreateEngine:
         engine = create_engine("postgresql://user:pass@host:5432/db")
 
         mock_gl.start.assert_called_once_with(
-            "postgresql://user:pass@host:5432/db", port=None, extra_args=None
+            "postgresql://user:pass@host:5432/db", config=None, port=None, extra_args=None
         )
         mock_sa.assert_called_once_with(PROXY_URL)
         assert engine is mock_sa.return_value
@@ -71,7 +71,7 @@ class TestCreateEngine:
         create_engine("postgresql+asyncpg://user:pass@host:5432/db")
 
         mock_gl.start.assert_called_once_with(
-            "postgresql://user:pass@host:5432/db", port=None, extra_args=None
+            "postgresql://user:pass@host:5432/db", config=None, port=None, extra_args=None
         )
         mock_sa.assert_called_once_with("postgresql+asyncpg://localhost:7932/mydb")
 
@@ -83,7 +83,7 @@ class TestCreateEngine:
         create_engine("postgresql://host/db", goldlapel_port=9000)
 
         mock_gl.start.assert_called_once_with(
-            "postgresql://host/db", port=9000, extra_args=None
+            "postgresql://host/db", config=None, port=9000, extra_args=None
         )
         # goldlapel_port must not leak to SQLAlchemy
         mock_sa.assert_called_once_with(PROXY_URL)
@@ -97,8 +97,22 @@ class TestCreateEngine:
         create_engine("postgresql://host/db", goldlapel_extra_args=extra)
 
         mock_gl.start.assert_called_once_with(
-            "postgresql://host/db", port=None, extra_args=extra
+            "postgresql://host/db", config=None, port=None, extra_args=extra
         )
+        mock_sa.assert_called_once_with(PROXY_URL)
+
+    @patch("goldlapel_sqlalchemy.goldlapel")
+    @patch("goldlapel_sqlalchemy._sa_create_engine")
+    def test_pops_goldlapel_config(self, mock_sa, mock_gl):
+        mock_gl.start.return_value = PROXY_URL
+        cfg = {"mode": "butler", "pool_size": 30}
+
+        create_engine("postgresql://host/db", goldlapel_config=cfg)
+
+        mock_gl.start.assert_called_once_with(
+            "postgresql://host/db", config=cfg, port=None, extra_args=None
+        )
+        # goldlapel_config must not leak to SQLAlchemy
         mock_sa.assert_called_once_with(PROXY_URL)
 
     @patch("goldlapel_sqlalchemy.goldlapel")
@@ -121,10 +135,24 @@ class TestCreateAsyncEngine:
         engine = create_async_engine("postgresql+asyncpg://user:pass@host:5432/db")
 
         mock_gl.start.assert_called_once_with(
-            "postgresql://user:pass@host:5432/db", port=None, extra_args=None
+            "postgresql://user:pass@host:5432/db", config=None, port=None, extra_args=None
         )
         mock_sa_async.assert_called_once_with("postgresql+asyncpg://localhost:7932/mydb")
         assert engine is mock_sa_async.return_value
+
+    @patch("goldlapel_sqlalchemy.goldlapel")
+    @patch("sqlalchemy.ext.asyncio.create_async_engine")
+    def test_pops_goldlapel_config(self, mock_sa_async, mock_gl):
+        mock_gl.start.return_value = PROXY_URL
+        cfg = {"mode": "butler", "pool_size": 30}
+
+        create_async_engine("postgresql+asyncpg://host/db", goldlapel_config=cfg)
+
+        mock_gl.start.assert_called_once_with(
+            "postgresql://host/db", config=cfg, port=None, extra_args=None
+        )
+        # goldlapel_config must not leak to SQLAlchemy
+        mock_sa_async.assert_called_once_with("postgresql+asyncpg://localhost:7932/mydb")
 
     @patch("goldlapel_sqlalchemy.goldlapel")
     @patch("sqlalchemy.ext.asyncio.create_async_engine")
@@ -156,7 +184,7 @@ class TestInit:
         init(url="postgresql://new@host/db")
 
         mock_gl.start.assert_called_once_with(
-            "postgresql://new@host/db", port=None, extra_args=None
+            "postgresql://new@host/db", config=None, port=None, extra_args=None
         )
 
     def test_raises_when_no_url(self, monkeypatch):
@@ -180,9 +208,20 @@ class TestInit:
         init()
 
         mock_gl.start.assert_called_once_with(
-            "postgresql://user:pass@host:5432/db", port=None, extra_args=None
+            "postgresql://user:pass@host:5432/db", config=None, port=None, extra_args=None
         )
         assert os.environ["DATABASE_URL"] == "postgresql+asyncpg://localhost:7932/mydb"
+
+    @patch("goldlapel_sqlalchemy.goldlapel")
+    def test_passes_config(self, mock_gl):
+        mock_gl.start.return_value = PROXY_URL
+        cfg = {"mode": "butler", "pool_size": 30}
+
+        init(url="postgresql://host/db", config=cfg)
+
+        mock_gl.start.assert_called_once_with(
+            "postgresql://host/db", config=cfg, port=None, extra_args=None
+        )
 
 
 class TestReExports:
