@@ -4,6 +4,7 @@ from unittest.mock import MagicMock, patch
 import pytest
 
 from goldlapel_sqlalchemy import (
+    _url_to_str,
     _strip_dialect,
     _restore_dialect,
     create_engine,
@@ -14,6 +15,34 @@ import goldlapel_sqlalchemy
 
 
 PROXY_URL = "postgresql://localhost:7932/mydb"
+
+
+def _make_url_object(url_str, password=None):
+    mock_url = MagicMock()
+    mock_url.render_as_string = MagicMock(return_value=url_str)
+    masked = url_str
+    if password:
+        masked = url_str.replace(password, "***")
+    mock_url.__str__ = MagicMock(return_value=masked)
+    return mock_url
+
+
+class TestUrlToStr:
+    def test_plain_string_passthrough(self):
+        assert _url_to_str("postgresql://user:pass@host/db") == "postgresql://user:pass@host/db"
+
+    def test_url_object_uses_render_as_string(self):
+        url = _make_url_object("postgresql://user:s3cret@host:5432/db", password="s3cret")
+        result = _url_to_str(url)
+        assert result == "postgresql://user:s3cret@host:5432/db"
+        url.render_as_string.assert_called_once_with(hide_password=False)
+
+    def test_url_object_without_render_as_string_falls_back_to_str(self):
+        class PlainUrl:
+            def __str__(self):
+                return "postgresql://user:pass@host/db"
+
+        assert _url_to_str(PlainUrl()) == "postgresql://user:pass@host/db"
 
 
 class TestStripDialect:
@@ -124,6 +153,32 @@ class TestCreateEngine:
 
         mock_sa.assert_called_once_with(PROXY_URL, echo=True, pool_size=5)
 
+    @patch("goldlapel_sqlalchemy.goldlapel")
+    @patch("goldlapel_sqlalchemy._sa_create_engine")
+    def test_url_object_preserves_password(self, mock_sa, mock_gl):
+        mock_gl.start.return_value = PROXY_URL
+        url = _make_url_object("postgresql://user:s3cret@host:5432/db", password="s3cret")
+
+        create_engine(url)
+
+        mock_gl.start.assert_called_once_with(
+            "postgresql://user:s3cret@host:5432/db", config=None, port=None, extra_args=None
+        )
+
+    @patch("goldlapel_sqlalchemy.goldlapel")
+    @patch("goldlapel_sqlalchemy._sa_create_engine")
+    def test_url_object_with_dialect_preserves_password(self, mock_sa, mock_gl):
+        mock_gl.start.return_value = PROXY_URL
+        url = _make_url_object(
+            "postgresql+psycopg://user:s3cret@host:5432/db", password="s3cret"
+        )
+
+        create_engine(url)
+
+        mock_gl.start.assert_called_once_with(
+            "postgresql://user:s3cret@host:5432/db", config=None, port=None, extra_args=None
+        )
+
 
 class TestCreateAsyncEngine:
     @patch("goldlapel_sqlalchemy.goldlapel")
@@ -221,6 +276,17 @@ class TestInit:
 
         mock_gl.start.assert_called_once_with(
             "postgresql://host/db", config=cfg, port=None, extra_args=None
+        )
+
+    @patch("goldlapel_sqlalchemy.goldlapel")
+    def test_url_object_preserves_password(self, mock_gl):
+        mock_gl.start.return_value = PROXY_URL
+        url = _make_url_object("postgresql://user:s3cret@host:5432/db", password="s3cret")
+
+        init(url=url)
+
+        mock_gl.start.assert_called_once_with(
+            "postgresql://user:s3cret@host:5432/db", config=None, port=None, extra_args=None
         )
 
 

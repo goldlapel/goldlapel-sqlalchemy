@@ -7,6 +7,12 @@ from sqlalchemy import create_engine as _sa_create_engine
 _DIALECT_RE = re.compile(r'^(postgres(?:ql)?)\+(\w+)(://)')
 
 
+def _url_to_str(url):
+    if hasattr(url, 'render_as_string'):
+        return url.render_as_string(hide_password=False)
+    return str(url)
+
+
 def _strip_dialect(url):
     m = _DIALECT_RE.match(url)
     if m:
@@ -24,7 +30,7 @@ def _start_proxy(url, kwargs):
     port = kwargs.pop("goldlapel_port", None)
     config = kwargs.pop("goldlapel_config", None)
     extra_args = kwargs.pop("goldlapel_extra_args", None)
-    clean_url, dialect = _strip_dialect(str(url))
+    clean_url, dialect = _strip_dialect(_url_to_str(url))
     proxy = goldlapel.start(clean_url, config=config, port=port, extra_args=extra_args)
     return _restore_dialect(proxy, dialect)
 
@@ -44,7 +50,7 @@ def init(url=None, *, config=None, port=None, extra_args=None):
     url = url or os.environ.get("DATABASE_URL")
     if not url:
         raise ValueError("Gold Lapel: DATABASE_URL not set. Pass a URL or set DATABASE_URL.")
-    clean_url, dialect = _strip_dialect(str(url))
+    clean_url, dialect = _strip_dialect(_url_to_str(url))
     proxy = goldlapel.start(clean_url, config=config, port=port, extra_args=extra_args)
     proxy = _restore_dialect(proxy, dialect)
     os.environ["DATABASE_URL"] = proxy
