@@ -1,6 +1,6 @@
 # goldlapel-sqlalchemy
 
-Gold Lapel plugin for SQLAlchemy — automatic Postgres query optimization with one import change.
+Gold Lapel plugin for SQLAlchemy — automatic Postgres query optimization with one import change. Includes L1 native cache — an in-process cache that serves repeated reads in microseconds with no TCP round-trip.
 
 ## Quick Start
 
