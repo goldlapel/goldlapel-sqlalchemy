@@ -82,6 +82,39 @@ goldlapel_sqlalchemy.init(
 
 The `goldlapel_config` dict (or `config` in `init()`) accepts any Gold Lapel configuration keys as snake_case Python dict keys. These are passed directly to the Gold Lapel proxy at startup.
 
+## L1 Native Cache
+
+L1 cache is enabled by default for sync engines. Every connection from the pool is wrapped with `goldlapel.wrap()`, which provides an in-process cache that serves repeated reads in microseconds with no TCP round-trip. Cache invalidation is handled automatically via the proxy's invalidation channel.
+
+To disable L1 cache:
+
+```python
+engine = create_engine(
+    "postgresql://user:pass@host:5432/mydb",
+    goldlapel_l1_cache=False,
+)
+```
+
+To set a custom invalidation port:
+
+```python
+engine = create_engine(
+    "postgresql://user:pass@host:5432/mydb",
+    goldlapel_invalidation_port=8888,
+)
+```
+
+The invalidation port defaults to `proxy_port + 2` (7934 when using the default proxy port). You can also set it via `goldlapel_config={"invalidation_port": 8888}`.
+
+If you provide a custom `creator` callable, it will be wrapped with L1 cache automatically:
+
+```python
+engine = create_engine(
+    "postgresql://user:pass@host:5432/mydb",
+    creator=my_connection_factory,  # your connections get L1 cache too
+)
+```
+
 ## Dialect Suffixes
 
 SQLAlchemy dialect suffixes (`+asyncpg`, `+psycopg`, `+pg8000`) are handled automatically — pass your normal SQLAlchemy URL and the plugin strips the suffix for the proxy, then restores it in the proxy URL.
