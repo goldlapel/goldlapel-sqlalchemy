@@ -70,6 +70,7 @@ def _make_creator(proxy_url, invalidation_port, user_creator=None):
                     host=host, port=port, dbname=dbname,
                     user=user, password=password,
                 )
+                conn.autocommit = True
         return goldlapel.wrap(conn, invalidation_port=invalidation_port)
     return creator
 

@@ -460,7 +460,9 @@ class TestL1Cache:
             mock_gl.wrap = MagicMock(side_effect=lambda conn, **kw: conn)
             creator = _make_creator("postgresql://user:pass@localhost:7932/mydb", 7934)
 
+            mock_conn = MagicMock()
             mock_psycopg2 = MagicMock()
+            mock_psycopg2.connect.return_value = mock_conn
             with patch.dict("sys.modules", {"psycopg": None}):
                 with patch("builtins.__import__", side_effect=_import_mock({"psycopg2": mock_psycopg2})):
                     creator()
@@ -469,6 +471,9 @@ class TestL1Cache:
                 host="localhost", port=7932, dbname="mydb",
                 user="user", password="pass",
             )
+            # psycopg2 connections must have autocommit set after creation,
+            # matching psycopg (v3) which uses autocommit=True in connect()
+            assert mock_conn.autocommit is True
 
     @patch("goldlapel_sqlalchemy.goldlapel")
     @patch("goldlapel_sqlalchemy._sa_create_engine")
