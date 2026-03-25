@@ -35,7 +35,8 @@ def _start_proxy(url, kwargs):
     l1_cache = kwargs.pop("goldlapel_l1_cache", True)
     clean_url, dialect = _strip_dialect(_url_to_str(url))
     os.environ["GOLDLAPEL_CLIENT"] = "sqlalchemy"
-    proxy = goldlapel.start(clean_url, config=config, port=port, extra_args=extra_args)
+    goldlapel.start(clean_url, config=config, port=port, extra_args=extra_args)
+    proxy_url = goldlapel.proxy_url() or clean_url
 
     resolved_port = port or goldlapel.DEFAULT_PORT
     if invalidation_port is None:
@@ -43,7 +44,7 @@ def _start_proxy(url, kwargs):
     else:
         inv_port = invalidation_port
 
-    return _restore_dialect(proxy, dialect), inv_port, l1_cache
+    return _restore_dialect(proxy_url, dialect), inv_port, l1_cache
 
 
 def _make_creator(proxy_url, invalidation_port, user_creator=None):
