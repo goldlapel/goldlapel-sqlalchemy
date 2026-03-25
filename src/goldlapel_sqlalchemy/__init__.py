@@ -34,7 +34,7 @@ def _start_proxy(url, kwargs):
     invalidation_port = kwargs.pop("goldlapel_invalidation_port", None)
     l1_cache = kwargs.pop("goldlapel_l1_cache", True)
     clean_url, dialect = _strip_dialect(_url_to_str(url))
-    os.environ["GOLDLAPEL_CLIENT"] = "sqlalchemy"
+    os.environ.setdefault("GOLDLAPEL_CLIENT", "sqlalchemy")
     goldlapel.start(clean_url, config=config, port=port, extra_args=extra_args)
     proxy_url = goldlapel.proxy_url() or clean_url
 
@@ -101,7 +101,7 @@ def init(url=None, *, config=None, port=None, extra_args=None, invalidation_port
     if not url:
         raise ValueError("Gold Lapel: DATABASE_URL not set. Pass a URL or set DATABASE_URL.")
     clean_url, dialect = _strip_dialect(_url_to_str(url))
-    os.environ["GOLDLAPEL_CLIENT"] = "sqlalchemy"
+    os.environ.setdefault("GOLDLAPEL_CLIENT", "sqlalchemy")
     proxy = goldlapel.start(clean_url, config=config, port=port, extra_args=extra_args)
     proxy = _restore_dialect(proxy, dialect)
     os.environ["DATABASE_URL"] = proxy
