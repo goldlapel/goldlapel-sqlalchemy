@@ -86,19 +86,12 @@ def create_engine(url, **kwargs):
 
 
 def create_async_engine(url, **kwargs):
+    # L1 native cache is not yet supported for async engines.
+    # Queries go through the GL proxy (L2 cache).
     from sqlalchemy.ext.asyncio import create_async_engine as _sa_create_async_engine
-    proxy, inv_port, l1_cache = _start_proxy(url, kwargs)
-
-    if l1_cache:
-        _setup_async_l1(inv_port)
+    proxy, _inv_port, _l1_cache = _start_proxy(url, kwargs)
 
     return _sa_create_async_engine(proxy, **kwargs)
-
-
-def _setup_async_l1(invalidation_port):
-    cache = goldlapel.NativeCache()
-    if not cache._invalidation_thread or not cache._invalidation_thread.is_alive():
-        cache.connect_invalidation(invalidation_port)
 
 
 def init(url=None, *, config=None, port=None, extra_args=None, invalidation_port=None):

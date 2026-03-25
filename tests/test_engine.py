@@ -199,10 +199,9 @@ class TestCreateEngine:
 
 
 class TestCreateAsyncEngine:
-    @patch("goldlapel_sqlalchemy._setup_async_l1")
     @patch("goldlapel_sqlalchemy.goldlapel")
     @patch("sqlalchemy.ext.asyncio.create_async_engine")
-    def test_starts_proxy_and_returns_async_engine(self, mock_sa_async, mock_gl, mock_l1):
+    def test_starts_proxy_and_returns_async_engine(self, mock_sa_async, mock_gl):
         mock_gl.start.return_value = PROXY_URL
         mock_gl.DEFAULT_PORT = 7932
         mock_sa_async.return_value = MagicMock()
@@ -215,10 +214,9 @@ class TestCreateAsyncEngine:
         mock_sa_async.assert_called_once_with("postgresql+asyncpg://localhost:7932/mydb")
         assert engine is mock_sa_async.return_value
 
-    @patch("goldlapel_sqlalchemy._setup_async_l1")
     @patch("goldlapel_sqlalchemy.goldlapel")
     @patch("sqlalchemy.ext.asyncio.create_async_engine")
-    def test_pops_goldlapel_config(self, mock_sa_async, mock_gl, mock_l1):
+    def test_pops_goldlapel_config(self, mock_sa_async, mock_gl):
         mock_gl.start.return_value = PROXY_URL
         mock_gl.DEFAULT_PORT = 7932
         cfg = {"mode": "butler", "pool_size": 30}
@@ -231,10 +229,9 @@ class TestCreateAsyncEngine:
         # goldlapel_config must not leak to SQLAlchemy
         mock_sa_async.assert_called_once_with("postgresql+asyncpg://localhost:7932/mydb")
 
-    @patch("goldlapel_sqlalchemy._setup_async_l1")
     @patch("goldlapel_sqlalchemy.goldlapel")
     @patch("sqlalchemy.ext.asyncio.create_async_engine")
-    def test_passes_remaining_kwargs(self, mock_sa_async, mock_gl, mock_l1):
+    def test_passes_remaining_kwargs(self, mock_sa_async, mock_gl):
         mock_gl.start.return_value = PROXY_URL
         mock_gl.DEFAULT_PORT = 7932
 
@@ -526,32 +523,23 @@ class TestL1Cache:
 
 
 class TestL1AsyncEngine:
-    @patch("goldlapel_sqlalchemy._setup_async_l1")
+    # L1 native cache is not supported for async engines — these tests verify
+    # that L1-related kwargs are silently consumed and don't leak to SQLAlchemy.
+
     @patch("goldlapel_sqlalchemy.goldlapel")
     @patch("sqlalchemy.ext.asyncio.create_async_engine")
-    def test_l1_setup_called_by_default(self, mock_sa_async, mock_gl, mock_setup):
+    def test_l1_cache_silently_ignored(self, mock_sa_async, mock_gl):
         mock_gl.start.return_value = PROXY_URL
         mock_gl.DEFAULT_PORT = 7932
 
         create_async_engine("postgresql+asyncpg://host/db")
 
-        mock_setup.assert_called_once_with(7934)
+        # No L1 setup — async engines use L2 (proxy) cache only
+        mock_sa_async.assert_called_once_with("postgresql+asyncpg://localhost:7932/mydb")
 
-    @patch("goldlapel_sqlalchemy._setup_async_l1")
     @patch("goldlapel_sqlalchemy.goldlapel")
     @patch("sqlalchemy.ext.asyncio.create_async_engine")
-    def test_l1_setup_not_called_when_disabled(self, mock_sa_async, mock_gl, mock_setup):
-        mock_gl.start.return_value = PROXY_URL
-        mock_gl.DEFAULT_PORT = 7932
-
-        create_async_engine("postgresql+asyncpg://host/db", goldlapel_l1_cache=False)
-
-        mock_setup.assert_not_called()
-
-    @patch("goldlapel_sqlalchemy._setup_async_l1")
-    @patch("goldlapel_sqlalchemy.goldlapel")
-    @patch("sqlalchemy.ext.asyncio.create_async_engine")
-    def test_l1_cache_kwarg_not_leaked_async(self, mock_sa_async, mock_gl, mock_setup):
+    def test_l1_cache_kwarg_not_leaked_async(self, mock_sa_async, mock_gl):
         mock_gl.start.return_value = PROXY_URL
         mock_gl.DEFAULT_PORT = 7932
 
@@ -560,16 +548,16 @@ class TestL1AsyncEngine:
         # goldlapel_l1_cache must not leak to SQLAlchemy
         mock_sa_async.assert_called_once_with("postgresql+asyncpg://localhost:7932/mydb")
 
-    @patch("goldlapel_sqlalchemy._setup_async_l1")
     @patch("goldlapel_sqlalchemy.goldlapel")
     @patch("sqlalchemy.ext.asyncio.create_async_engine")
-    def test_custom_invalidation_port_async(self, mock_sa_async, mock_gl, mock_setup):
+    def test_invalidation_port_kwarg_not_leaked_async(self, mock_sa_async, mock_gl):
         mock_gl.start.return_value = PROXY_URL
         mock_gl.DEFAULT_PORT = 7932
 
         create_async_engine("postgresql+asyncpg://host/db", goldlapel_invalidation_port=8888)
 
-        mock_setup.assert_called_once_with(8888)
+        # goldlapel_invalidation_port must not leak to SQLAlchemy
+        mock_sa_async.assert_called_once_with("postgresql+asyncpg://localhost:7932/mydb")
 
 
 class TestL1Init:
