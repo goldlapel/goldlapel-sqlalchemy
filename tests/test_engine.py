@@ -151,7 +151,7 @@ class TestCreateEngine:
         mock_gl.start.return_value = PROXY_URL
         mock_gl.proxy_url.return_value = PROXY_URL
         mock_gl.DEFAULT_PORT = 7932
-        cfg = {"mode": "butler", "pool_size": 30}
+        cfg = {"mode": "waiter", "pool_size": 30}
 
         create_engine("postgresql://host/db", goldlapel_config=cfg)
 
@@ -229,7 +229,7 @@ class TestCreateAsyncEngine:
         mock_gl.start.return_value = PROXY_URL
         mock_gl.proxy_url.return_value = PROXY_URL
         mock_gl.DEFAULT_PORT = 7932
-        cfg = {"mode": "butler", "pool_size": 30}
+        cfg = {"mode": "waiter", "pool_size": 30}
 
         create_async_engine("postgresql+asyncpg://host/db", goldlapel_config=cfg)
 
@@ -312,7 +312,7 @@ class TestInit:
         mock_gl.start.return_value = PROXY_URL
         mock_gl.proxy_url.return_value = PROXY_URL
         mock_gl.DEFAULT_PORT = 7932
-        cfg = {"mode": "butler", "pool_size": 30}
+        cfg = {"mode": "waiter", "pool_size": 30}
 
         init(url="postgresql://host/db", config=cfg)
 
