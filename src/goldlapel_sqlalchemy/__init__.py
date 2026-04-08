@@ -123,3 +123,14 @@ GoldLapel = goldlapel.GoldLapel
 NativeCache = goldlapel.NativeCache
 wrap = goldlapel.wrap
 DEFAULT_PORT = goldlapel.DEFAULT_PORT
+
+doc_insert = goldlapel.doc_insert
+doc_insert_many = goldlapel.doc_insert_many
+doc_find = goldlapel.doc_find
+doc_find_one = goldlapel.doc_find_one
+doc_update = goldlapel.doc_update
+doc_update_one = goldlapel.doc_update_one
+doc_delete = goldlapel.doc_delete
+doc_delete_one = goldlapel.doc_delete_one
+doc_count = goldlapel.doc_count
+doc_create_index = goldlapel.doc_create_index
