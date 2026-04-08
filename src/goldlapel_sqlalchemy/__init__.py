@@ -134,3 +134,4 @@ doc_delete = goldlapel.doc_delete
 doc_delete_one = goldlapel.doc_delete_one
 doc_count = goldlapel.doc_count
 doc_create_index = goldlapel.doc_create_index
+doc_aggregate = goldlapel.doc_aggregate
